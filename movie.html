@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Details</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav id="navbar">
+        <div id="logo">
+            <a href="index.html"><h1>MOVIES</h1></a>
+        </div>
+        <ul id="nav-links">
+            <li>Bollywood</li>
+            <li>Hollywood</li>
+            <li>T.V Serials</li>
+        </ul>
+
+        <a href="index.html" id="blue">Back to Search</a>
+    </nav>
+
+    <div class="main_bg">
+        <div class="container" id="movie-details-container">
+        </div>
+    </div>
+
+
+
+    <script>
+        const apiKey = 'baff41a90d465d14ac6d6afdf6d2d02a';  
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const movieId = urlParams.get('id');
+
+        if (movieId) {
+            fetch(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=en-US`)
+                .then(response => {
+                    return response.json();
+                })
+                .then(data => {
+                    displayMovieDetails(data);
+                    fetchTrailer(movieId); 
+                })
+        }
+
+        function displayMovieDetails(movie) {
+            const container = document.getElementById('movie-details-container');
+            const movieDetails = document.createElement('div');
+            movieDetails.classList.add('movie-details');
+
+            const movieImage = movie.poster_path ?
+                `<img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" alt="${movie.title}">` : 
+                `<img src="https://via.placeholder.com/200x300?text=No+Image" alt="No Image">`;
+
+            const genres = movie.genres.map(genre => genre.name);
+            const releaseDate = movie.release_date ;
+            const runtime = movie.runtime ;
+            const language = movie.original_language;
+            const overview = movie.overview ;
+            const rating = movie.vote_average ;
+
+            movieDetails.innerHTML = `
+                <h2>${movie.title}</h2>
+                ${movieImage}
+                <p><strong>Release Date:</strong> ${releaseDate}</p>
+                <p><strong>Genres:</strong> ${genres}</p>
+                <p><strong>Rating:</strong> ${rating} / 10</p>
+                <p><strong>Runtime:</strong> ${runtime}</p>
+                <p><strong>Language:</strong> ${language}</p>
+                <p><strong>Overview:</strong> ${overview}</p>
+                <button id="play-trailer" style="display:none;">Watch Trailer</button>`;
+
+            container.appendChild(movieDetails);
+        }
+
+        function fetchTrailer(movieId) {
+            fetch(`https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${apiKey}&language=en-US`)
+                .then(response => response.json())
+                .then(data => {
+                    const trailer = data.results.find(video => video.type === 'Trailer' && video.site === 'YouTube');
+                    if (trailer) {
+                        const trailerButton = document.getElementById('play-trailer');
+                        trailerButton.style.display = 'inline-block'; 
+                        trailerButton.addEventListener('click', () => {
+                            const trailerUrl = `https://www.youtube.com/embed/${trailer.key}?autoplay=1`;
+                            showTrailer(trailerUrl);
+                        });
+                    }
+                })
+        }
+
+        function showTrailer(url) {
+            const container = document.getElementById('movie-details-container');
+            const trailerSection = document.createElement('div');
+            trailerSection.classList.add('trailer-section');
+
+            trailerSection.innerHTML = `
+                <h3>Trailer</h3>
+                <iframe width="560" height="315" src="${url}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                <button onclick="closeTrailer()">Close Trailer</button>
+            `;
+            container.appendChild(trailerSection);
+        }
+
+        function closeTrailer() {
+            const trailerSection = document.querySelector('.trailer-section');
+            if (trailerSection) {
+                trailerSection.remove();
+            }
+        }
+    </script>
+
+</body>
+</html>
